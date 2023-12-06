@@ -1,4 +1,4 @@
-import superfastcode
+import FDTCPP
 import warnings
 warnings.filterwarnings("ignore")
 import numpy as np
@@ -125,7 +125,7 @@ class FairRandomForestClassifier():
             random_states = np.random.randint(0, 2 ** 31, self.n_estimators)
 
         self.trees = [
-            superfastcode.FDTC(
+            FDTCPP.FDTC(
                     n_bins=self.n_bins,
                     max_depth=self.max_depth,
                     bootstrap=self.bootstrap,

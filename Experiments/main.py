@@ -1,7 +1,7 @@
 import tools
 import FDTC
 import ctpf
-import superfastcode
+import FDTCPP
 import Calc_opt
 import OHE_opt
 import tree_samples
@@ -71,7 +71,7 @@ def Main():
     #            elif lang == "ohe":
     #                tree = OHE_opt.FairDecisionTreeClassifier()
     #            elif lang == "cpp":
-    #                tree = superfastcode.FDTC()
+    #                tree = FDTCPP.FDTC()
     #            tree.fit(X=trainX, y=trainy, s=trains)
     #            probpred = np.array(tree.predict_proba(X=testX))
     #            pred = np.array(tree.predict(X=testX))
@@ -116,7 +116,7 @@ def Main():
     #            elif lang == "hybrid":
     #                tree = ctpf.FairRandomForestClassifier(n_jobs=-1)
     #            elif lang == "cpp":
-    #                tree = superfastcode.FRFC()
+    #                tree = FDTCPP.FRFC()
     #            tree.fit(X=trainX, y=trainy, s=trains)
     #            probpred = np.array(tree.predict_proba(X=testX))
     #            pred = np.array(tree.predict(X=testX))
@@ -145,7 +145,7 @@ def Main():
     #            elif lang == "ohe":
     #                tree = OHE_opt.FairDecisionTreeClassifier()
     #            elif lang == "cpp":
-    #                tree = superfastcode.FDTC()
+    #                tree = FDTCPP.FDTC()
     #            t0 = perf_counter()
     #            tree.fit(X=trainX, y=trainy, s=trains)
     #            t1 = perf_counter()
@@ -192,7 +192,7 @@ def Main():
     #                if lang == "Python":
     #                    tree = FDTC.FairDecisionTreeClassifier()
     #                else:
-    #                    tree = superfastcode.FDTC()
+    #                    tree = FDTCPP.FDTC()
     #                t0 = perf_counter()
     #                tree.fit(trainX, trainy, trains)
     #                tree.predict_proba(testX)
@@ -227,7 +227,7 @@ def Main():
     #                trains = s[i][train]
     #                testX = X[i][test]
     #                testy = y[i][test]
-    #                #tree = superfastcode.FDTC(max_depth=-1)
+    #                #tree = FDTCPP.FDTC(max_depth=-1)
     #                tree = FDTC.FairDecisionTreeClassifier()
     #                tree.fit(trainX, trainy, trains)
     #                tree.predict_proba(testX)
@@ -262,7 +262,7 @@ def Main():
     #            if lang == "Python":
     #                tree = FDTC.FairDecisionTreeClassifier(n_bins=n)
     #            else:
-    #                tree = superfastcode.FDTC(n_bins=n)
+    #                tree = FDTCPP.FDTC(n_bins=n)
     #            t0 = perf_counter()
     #            tree.fit(X[i], y[i], s[i])
     #            t1 = perf_counter()
@@ -395,7 +395,7 @@ def Main():
     #                        if lang == "python":
     #                            forest = FDTC.FairRandomForestClassifier(n_jobs=n_jobs, n_estimators=n_estimators)
     #                        elif lang == "cpp":
-    #                            forest = superfastcode.FRFC(n_jobs=n_jobs, n_estimators=n_estimators)
+    #                            forest = FDTCPP.FRFC(n_jobs=n_jobs, n_estimators=n_estimators)
     #                        elif lang == "hybrid":
     #                            forest = ctpf.FairRandomForestClassifier(n_jobs=n_jobs, n_estimators=n_estimators)
     #                        t0 = perf_counter()
@@ -524,7 +524,7 @@ def Main():
     #                tree.predict_proba(testX)
     #                t2 = perf_counter()
     #            elif lang == "cpp":
-    #                tree = superfastcode.FDTC()
+    #                tree = FDTCPP.FDTC()
     #                t0 = perf_counter()
     #                tree.fit(X=trainX.to_numpy(), y=trainy.to_numpy(), s=trains.to_numpy())
     #                t1 = perf_counter()
@@ -571,7 +571,7 @@ def Main():
     #                tree.predict_proba(testX.to_numpy())
     #                t2 = perf_counter()
     #            elif lang == "cpp":
-    #                tree = superfastcode.FRFC(n_jobs=-1, n_estimators=100)
+    #                tree = FDTCPP.FRFC(n_jobs=-1, n_estimators=100)
     #                t0 = perf_counter()
     #                tree.fit(X=trainX.to_numpy(), y=trainy.to_numpy(), s=trains.to_numpy())
     #                t1 = perf_counter()

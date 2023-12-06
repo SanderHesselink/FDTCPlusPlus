@@ -2,7 +2,7 @@ import tools
 import FDTC
 import Calc_opt
 import OHE_opt
-import superfastcode
+import FDTCPP
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ def vary_samples_c(name):
 
     X, y, s = tools.load(name)
 
-    tree = superfastcode.FDTC(min_samples_leaf=1, min_samples_split=2)
+    tree = FDTCPP.FDTC(min_samples_leaf=1, min_samples_split=2)
 
     resdict["samples"] = list(range(1, int(len(X[0])/10), int(len(X[0])/100)))
     resdict["samples"].append(10000)

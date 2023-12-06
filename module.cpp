@@ -731,7 +731,7 @@ public:
     }
 
     // get_params
-    // Having a variant inside a variant is not great, but probably still faster than implementing a cast
+    // Having a variant inside a variant is not great, but still faster than implementing a cast
     unordered_map<string, variant<float, double, int, bool, string, variant<float, string>>> get_params(bool deep) {
         unordered_map<string, variant<float, double, int, bool, string, variant<float, string>>> ret = {
             {"n_bins", n_bins},
@@ -1042,7 +1042,7 @@ void test() {
 }
 
 
-PYBIND11_MODULE(superfastcode, m) {
+PYBIND11_MODULE(FDTCPP, m) {
     py::class_<TreeNode>(m, "TreeNode")
         .def(py::pickle(
             [](TreeNode & t) {
@@ -1121,7 +1121,7 @@ X -> 2 dimensional list or np.array : numerical and/or categorical)",
                 f.selected_features = t[2].cast<unordered_set<int>>();
                 stringstream s;
                 s << t[3].get_type();
-                if (s.str() == "<class 'superfastcode.TreeNode'>") {
+                if (s.str() == "<class 'FDTCPP.TreeNode'>") {
                     auto a = t[3].cast<TreeNode>();
                     f.tree = make_shared<TreeNode>(a);
                 }

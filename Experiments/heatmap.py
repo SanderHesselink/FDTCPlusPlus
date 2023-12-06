@@ -4,7 +4,7 @@ from time import perf_counter
 from sklearn.model_selection import KFold
 
 import datasets
-import superfastcode
+import FDTCPP
 import FDTC
 import math
 
@@ -32,7 +32,7 @@ def heatmap_data(s_shift, lang):
                     if lang == "Python":
                         tree = FDTC.FairDecisionTreeClassifier()
                     else:
-                        tree = superfastcode.FDTC()
+                        tree = FDTCPP.FDTC()
                     t0 = perf_counter()
                     tree.fit(trainX, trainy, trains)
                     tree.predict_proba(testX)
