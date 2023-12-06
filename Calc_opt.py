@@ -11,166 +11,6 @@ from sklearn.metrics import roc_auc_score, confusion_matrix
 import time
 
 
-def demographic_parity_score(s, y_pred):
-    # Reshape input to fit function
-    # Shape y_pred to 1 dimensional
-    y_pred = np.array(y_pred).ravel()
-    s = np.array(s)
-    # Reshape s to multidimensional
-    if len(s.shape) == 1:
-        s = s.reshape(-1, 1)
-
-    demographic_parities = []
-    for s_column in range(s.shape[1]):
-        # if one of the sensitive variables always has the same value
-        if len(np.unique(s[:, s_column])) == 1:
-            demographic_parities.append(1)
-
-        else:
-            dem_par = 0
-            for s_unique in np.unique(s[:, s_column]):
-                s_cond_0 = (s[:, s_column] == s_unique)
-                s_cond_1 = (s[:, s_column] != s_unique)
-
-                dem_par = max(
-                    dem_par,
-                    abs(
-                        (s_cond_0 & (y_pred == 1)).sum() / s_cond_0.sum() - \
-                        (s_cond_1 & (y_pred == 1)).sum() / s_cond_1.sum()
-                    )
-                )
-
-            demographic_parities.append(dem_par)
-
-    return demographic_parities[0] if len(demographic_parities) == 1 else demographic_parities
-
-
-def equal_opportunity_score(s, y_true, y_pred):
-    y_true = np.array(y_true).ravel()
-    y_pred = np.array(y_pred).ravel()
-
-    s = np.array(s)
-    if len(s.shape) == 1:
-        s = s.reshape(-1, 1)
-
-    equal_opportunities = []
-    for s_column in range(s.shape[1]):
-        if len(np.unique(s[:, s_column])) == 1:
-            equal_opportunities.append(1)
-        else:
-            eq_op = 0
-            for s_unique in np.unique(s[:, s_column]):
-                s_cond_0 = (s[:, s_column] == s_unique)
-                s_cond_1 = (s[:, s_column] != s_unique)
-
-                tn_s_0, fp_s_0, fn_s_0, tp_s_0 = confusion_matrix(y_true[s_cond_0], y_pred[s_cond_0],
-                                                                  labels=[0, 1]).ravel()
-                tn_s_1, fp_s_1, fn_s_1, tp_s_1 = confusion_matrix(y_true[s_cond_1], y_pred[s_cond_1],
-                                                                  labels=[0, 1]).ravel()
-
-                pos_s_0 = (tp_s_0 + fn_s_0)
-                pos_s_1 = (tp_s_1 + fn_s_1)
-
-                if (pos_s_0 == 0) and (pos_s_1 == 0):
-                    eq_op = np.nan
-                    break
-
-                elif (
-                        ((pos_s_0 > 0) and (pos_s_1 == 0)) or \
-                        ((pos_s_0 == 0) and (pos_s_1 > 1))
-                ):
-                    eq_op = 1
-                    break
-
-                else:
-                    tpr_s_0 = tp_s_0 / pos_s_0
-                    tpr_s_1 = tp_s_1 / pos_s_1
-                    eq_op = max(eq_op, abs(tpr_s_0 - tpr_s_1))
-
-            equal_opportunities.append(eq_op)
-
-    return equal_opportunities[0] if len(equal_opportunities) == 1 else equal_opportunities
-
-
-def equalized_odds_score(s, y_true, y_pred):
-    y_true = np.array(y_true).ravel()
-    y_pred = np.array(y_pred).ravel()
-
-    s = np.array(s)
-    if len(s.shape) == 1:
-        s = s.reshape(-1, 1)
-
-    equalized_odds = []
-    for s_column in range(s.shape[1]):
-        if len(np.unique(s[:, s_column])) == 1:
-            equalized_odds.append(1)
-        else:
-            eq_odds = 0
-            for s_unique in np.unique(s[:, s_column]):
-                s_cond_0 = (s[:, s_column] == s_unique)
-                s_cond_1 = (s[:, s_column] != s_unique)
-
-                tn_s_0, fp_s_0, fn_s_0, tp_s_0 = confusion_matrix(y_true[s_cond_0], y_pred[s_cond_0],
-                                                                  labels=[0, 1]).ravel()
-                tn_s_1, fp_s_1, fn_s_1, tp_s_1 = confusion_matrix(y_true[s_cond_1], y_pred[s_cond_1],
-                                                                  labels=[0, 1]).ravel()
-
-                pos_s_0 = (tp_s_0 + fn_s_0)
-                pos_s_1 = (tp_s_1 + fn_s_1)
-                neg_s_0 = (tn_s_0 + fp_s_0)
-                neg_s_1 = (tn_s_1 + fp_s_1)
-
-                if (pos_s_0 == 0) and (pos_s_1 == 0):
-                    eq_odds = np.nan
-                    break
-
-                elif (neg_s_0 == 0) and (neg_s_1 == 0):
-                    eq_odds = np.nan
-                    break
-
-                elif (
-                        ((pos_s_0 > 0) and (pos_s_1 == 0)) or \
-                        ((pos_s_0 == 0) and (pos_s_1 > 1)) or \
-                        ((neg_s_0 > 0) and (neg_s_1 == 0)) or \
-                        ((neg_s_0 == 0) and (neg_s_1 > 1))
-                ):
-                    eq_odds = 1
-                    break
-
-                else:
-                    tpr_s_0 = tp_s_0 / pos_s_0
-                    tpr_s_1 = tp_s_1 / pos_s_1
-                    fpr_s_0 = fp_s_0 / neg_s_0
-                    fpr_s_1 = fp_s_1 / neg_s_1
-                    eq_odds = max(eq_odds, abs(abs(tpr_s_0 - tpr_s_1) - abs(fpr_s_0 - fpr_s_1)))
-
-            equalized_odds.append(eq_odds)
-
-    return equalized_odds[0] if len(equalized_odds) == 1 else equalized_odds
-
-
-def sensitive_auc_score(s, y_prob):
-    y_prob = np.array(y_prob)
-    s = np.array(s)
-    if len(s.shape) == 1:
-        s = s.reshape(-1, 1)
-
-    sensitive_aucs = []
-    for s_column in range(s.shape[1]):
-        if len(np.unique(s[:, s_column])) == 1:
-            sensitive_aucs.append(1)
-        else:
-            sens_auc = 0
-            for s_unique in np.unique(s[:, s_column]):
-                s_bool = (s[:, s_column] == s_unique)
-                auc = roc_auc_score(s_bool, y_prob)
-                auc = max(1 - auc, auc)
-                sens_auc = max(sens_auc, auc)
-            sensitive_aucs.append(sens_auc)
-
-    return sensitive_aucs[0] if len(sensitive_aucs) == 1 else sensitive_aucs
-
-
 class FairDecisionTreeClassifier():
     def __init__(
             self,
@@ -322,20 +162,6 @@ class FairDecisionTreeClassifier():
             ), axis=1
         )
 
-        # if self.oob_pruning and self.criterion == "scaff" and ((self.sampling_proportion != 1.0) or (self.bootstrap)):
-        #     self.X_validation = self.X_validation[self.features]
-        #     categorical_part_val = self.X_validation.select_dtypes(exclude=numerics)
-        #     numeric_part_val = self.X_validation.select_dtypes(include=numerics)
-        #     self.X_validation = np.concatenate(
-        #         (
-        #             numeric_part_val.values.astype(float),
-        #             self.ohe.transform(categorical_part_val).toarray()
-        #         ), axis=1
-        #     )
-
-        # feature_value_idx_bool[feature][value] = idx_bool
-        # represents the indexs for which feature < value
-        # ~feature_value_idx_bool[feature][value]: feature >= value
         self.feature_value_idx_bool = {}
         for feature in range(self.X.shape[1]):
             self.feature_value_idx_bool[feature] = {}
@@ -369,8 +195,6 @@ class FairDecisionTreeClassifier():
                     # focusing on either left or right bool is fine as long as we take the max auc
 
                     # auc_y
-                    #tpr_y = ((self.y_pos_bool) & left_bool).sum() / ((self.y_pos_bool) & indexs).sum()
-                    #fpr_y = ((self.y_neg_bool) & left_bool).sum() / ((self.y_neg_bool) & indexs).sum()
                     pos_sum = (self.y_pos_bool & left_bool).sum()
                     neg_sum = lsize - pos_sum
                     total_pos = (self.y_pos_bool & indexs).sum()
@@ -389,9 +213,6 @@ class FairDecisionTreeClassifier():
                         if len(unique_s) >= 2:
                             for s in unique_s:
                                 s_pos = self.s_bool_dict[s_column][s]
-                                #s_neg = ~s_pos
-                                #tpr_s = (s_pos & left_bool).sum() / (s_pos & indexs).sum()
-                                #fpr_s = (s_neg & left_bool).sum() / (s_neg & indexs).sum()
                                 pos_sum = (s_pos & left_bool).sum()
                                 neg_sum = lsize - pos_sum
                                 total_pos = (s_pos & indexs).sum()
@@ -411,12 +232,7 @@ class FairDecisionTreeClassifier():
 
                     scaff_child = (1 - self.orthogonality) * auc_y - self.orthogonality * auc_s
                     scaff_gain = scaff_child - scaff_parent
-                    # if self.split_info_norm == "entropy":
                     split_info = st.entropy([lsize, (isize - lsize)], base=2)
-                    # elif self.split_info_norm == "entropy_inv":
-                    #     split_info = 1 / st.entropy([left_bool.sum(), right_bool.sum()], base=2)
-                    # else:
-                    #     split_info = 1
 
                     score = scaff_gain / split_info
 
@@ -426,69 +242,8 @@ class FairDecisionTreeClassifier():
 
                 return score
 
-        #elif self.criterion == "kamiran":
-        #    # return score of split (dependant on criterion)
-        #    def evaluate_split(feature, value, indexs):
-        #        left_bool = self.feature_value_idx_bool[feature][value] & indexs
-        #        right_bool = (~self.feature_value_idx_bool[feature][value]) & indexs
-        #        # if split results in 2 non-empty partitions
-        #        if (left_bool.sum() >= self.min_samples_leaf) and (right_bool.sum() >= self.min_samples_leaf):
-        #            # information gain class
-        #            entropy_parent = st.entropy([
-        #                (self.y_pos_bool & indexs).sum(),
-        #                (self.y_neg_bool & indexs).sum()
-        #            ])
-        #            entropy_left = st.entropy([
-        #                (self.y_pos_bool & left_bool).sum(),
-        #                (self.y_neg_bool & left_bool).sum()
-        #            ])
-        #            entropy_right = st.entropy([
-        #                (self.y_pos_bool & right_bool).sum(),
-        #                (self.y_neg_bool & right_bool).sum()
-        #            ])
-        #            information_gain_class = entropy_parent - sum([
-        #                entropy_left * (left_bool.sum() / indexs.sum()),
-        #                entropy_right * (right_bool.sum() / indexs.sum())
-        #            ])
 
-        #            # information gain sensitive
-        #            entropy_parent = st.entropy([
-        #                (self.s_pos_bool & indexs).sum(),
-        #                (self.s_neg_bool & indexs).sum()
-        #            ])
-        #            entropy_left = st.entropy([
-        #                (self.s_pos_bool & left_bool).sum(),
-        #                (self.s_neg_bool & left_bool).sum()
-        #            ])
-        #            entropy_right = st.entropy([
-        #                (self.s_pos_bool & right_bool).sum(),
-        #                (self.s_neg_bool & right_bool).sum()
-        #            ])
-        #            information_gain_sensitive = entropy_parent - sum([
-        #                entropy_left * (left_bool.sum() / indexs.sum()),
-        #                entropy_right * (right_bool.sum() / indexs.sum())
-        #            ])
 
-        #            if self.kamiran_method == "sum":
-        #                score = information_gain_class + information_gain_sensitive
-
-        #            elif self.kamiran_method == "sub":
-        #                score = information_gain_class - information_gain_sensitive
-
-        #            elif self.kamiran_method == "div":
-        #                if information_gain_sensitive == 0:
-        #                    # division by zero
-        #                    score = np.inf
-
-        #                else:
-        #                    score = information_gain_class / information_gain_sensitive
-
-        #        else:
-        #            score = -np.inf
-
-        #        return score
-
-        # return best (score, feature, split_value) dependant on criterion and indexs
         def get_best_split(indexs):
             best_score = 0
             best_value = np.nan
@@ -523,25 +278,6 @@ class FairDecisionTreeClassifier():
                 if self.criterion == "scaff":
                     return class_prob
 
-                #elif self.criterion == "kamiran":
-                #    # https://www.win.tue.nl/~mpechen/publications/pubs/KamiranICDM2010.pdf
-                #    leaf_y_neg_n = (indexs & self.y_neg_bool).sum()
-                #    leaf_y_pos_n = (indexs & self.y_pos_bool).sum()
-                #    leaf_s_neg_n = (indexs & self.s_neg_bool).sum()
-                #    leaf_s_pos_n = (indexs & self.s_pos_bool).sum()
-
-                #    if leaf_y_neg_n > leaf_y_pos_n:
-                #        delta_acc = (leaf_y_pos_n - leaf_y_neg_n) / len(y)
-                #        delta_disc = leaf_s_neg_n / self.s_neg_bool.sum() - leaf_s_pos_n / self.s_pos_bool.sum()
-
-                #    else:
-                #        delta_acc = (leaf_y_neg_n - leaf_y_pos_n) / len(y)
-                #        delta_disc = leaf_s_pos_n / self.s_pos_bool.sum() - leaf_s_neg_n / self.s_neg_bool.sum()
-
-                #    if delta_acc == 0:
-                #        return class_prob, delta_acc, delta_disc, np.inf
-                #    else:
-                #        return class_prob, delta_acc, delta_disc, abs(delta_disc / delta_acc)
 
             else:
                 score, feature, value = get_best_split(indexs)
@@ -550,26 +286,7 @@ class FairDecisionTreeClassifier():
                     if self.criterion == "scaff":
                         return class_prob
 
-                    #elif self.criterion == "kamiran":
-                    #    # https://www.win.tue.nl/~mpechen/publications/pubs/KamiranICDM2010.pdf
-                    #    leaf_y_neg_n = (indexs & self.y_neg_bool).sum()
-                    #    leaf_y_pos_n = (indexs & self.y_pos_bool).sum()
 
-                    #    leaf_s_neg_n = (indexs & self.s_neg_bool).sum()
-                    #    leaf_s_pos_n = (indexs & self.s_pos_bool).sum()
-
-                    #    if leaf_y_neg_n > leaf_y_pos_n:
-                    #        delta_acc = (leaf_y_pos_n - leaf_y_neg_n) / len(y)
-                    #        delta_disc = leaf_s_neg_n / self.s_neg_bool.sum() - leaf_s_pos_n / self.s_pos_bool.sum()
-
-                    #    else:
-                    #        delta_acc = (leaf_y_neg_n - leaf_y_pos_n) / len(y)
-                    #        delta_disc = leaf_s_pos_n / self.s_pos_bool.sum() - leaf_s_neg_n / self.s_neg_bool.sum()
-
-                    #    if delta_acc == 0:
-                    #        return class_prob, delta_acc, delta_disc, np.inf
-                    #    else:
-                    #        return class_prob, delta_acc, delta_disc, abs(delta_disc / delta_acc)
 
                 else:
                     left_indexs = self.feature_value_idx_bool[feature][value] & indexs
@@ -583,91 +300,7 @@ class FairDecisionTreeClassifier():
                     return tree
 
         self.tree = build_tree(self.indexs)
-        #def get_paths_leaves(tree, path=[]):
-        #    output = []
-        #    if type(tree) == type({}):
-        #        feature, value = list(tree.keys())[0]
-        #        sub_tree_left = tree[(feature, value)]["<"]
-        #        sub_tree_right = tree[(feature, value)][">="]
-        #        output += get_paths_leaves(sub_tree_left, path + [(feature, value, "<")])
-        #        output += get_paths_leaves(sub_tree_right, path + [(feature, value, ">=")])
-        #        return output
 
-        #    else:
-        #        leaf = tree
-        #        return [[path, leaf]]
-
-        #  prune tree with X_validation
-        # if self.oob_pruning and self.criterion == "scaff":
-        #     def get_prob(X, tree, y_prob=None, idx_bool=None):
-        #         y_prob = np.repeat(np.nan, len(X)) if (y_prob is None) else (y_prob)
-        #         idx_bool = np.repeat(True, len(X)) if (idx_bool is None) else (idx_bool)
-        #         if type(tree) == type({}):
-        #             feature, value = list(tree.keys())[0]
-        #             left_bool = (X[:, feature] < value) & idx_bool
-        #             right_bool = (X[:, feature] >= value) & idx_bool
-        #             sub_tree_left = tree[(feature, value)]["<"]
-        #             sub_tree_right = tree[(feature, value)][">="]
-        #             y_prob = get_prob(X, sub_tree_left, y_prob, left_bool)
-        #             y_prob = get_prob(X, sub_tree_right, y_prob, right_bool)
-        #             return y_prob
-        #
-        #         else:
-        #             y_prob[idx_bool] = tree
-        #             return y_prob
-        #
-        #     y_prob = get_prob(self.X_validation, self.tree)
-        #     auc_y = roc_auc_score(self.y_validation, y_prob)
-        #     auc_s = sensitive_auc_score(self.s_validation, y_prob)
-        #     best_score = (1 - self.orthogonality) * auc_y - self.orthogonality * auc_s
-        #
-        #     stop_flag = 0
-        #     while not stop_flag:
-        #         best_i = None
-        #         paths_leaves = get_paths_leaves(self.tree)
-        #         # len(paths_leaves)==1 means root node
-        #         if len(paths_leaves) > 1:
-        #             for i in range(len(paths_leaves)):
-        #                 path, _ = paths_leaves[i]
-        #                 sub_tree = copy(self.tree)
-        #                 str_path = "sub_tree"
-        #                 for sub_path in path[:-1]:
-        #                     feature, value, sign = sub_path
-        #                     str_loc = "[(" + str(feature) + "," + str(value) + ")]['" + sign + "']"
-        #                     str_path += str_loc
-        #                 feature, value, _ = path[-1]
-        #                 last_str_loc = "[(" + str(feature) + "," + str(value) + ")]['prob']"
-        #                 last_str_path = str_path + last_str_loc
-        #                 new_prob = eval(last_str_path)
-        #                 exec(str_path + " = " + str(new_prob))
-        #                 y_prob = get_prob(self.X_validation, sub_tree)
-        #                 auc_y = roc_auc_score(self.y_validation, y_prob)
-        #                 auc_s = sensitive_auc_score(self.s_validation, y_prob)
-        #                 new_score = (1 - self.orthogonality) * auc_y - self.orthogonality * auc_s
-        #                 if new_score > best_score:
-        #                     best_score = new_score
-        #                     best_i = i
-        #
-        #             if best_i is not None:
-        #                 path, _ = paths_leaves[best_i]
-        #                 str_path = "self.tree"
-        #                 for sub_path in path[:-1]:
-        #                     feature, value, sign = sub_path
-        #                     str_loc = "[(" + str(feature) + "," + str(value) + ")]['" + sign + "']"
-        #                     str_path += str_loc
-        #                 feature, value, _ = path[-1]
-        #                 last_str_loc = "[(" + str(feature) + "," + str(value) + ")]['prob']"
-        #                 last_str_path = str_path + last_str_loc
-        #                 new_prob = eval(last_str_path)
-        #                 exec(str_path + " = " + str(new_prob))
-        #
-        #             else:
-        #                 stop_flag = 1
-        #
-        #         else:
-        #             stop_flag = 1
-
-        #self.paths_leaves = get_paths_leaves(self.tree)
 
         self.is_fit = True
 
@@ -702,93 +335,11 @@ class FairDecisionTreeClassifier():
                     return y_prob
 
                 else:
-                    #print(tree, end=" ")
-                    #for i in idx_bool:
-                    #    print(int(i), end="")
-                    #print()
                     y_prob[idx_bool] = tree
                     return y_prob
 
             y_prob = get_prob(X, self.tree).reshape(-1, 1)
 
-        #elif self.criterion == "kamiran":
-        #    def get_prob(X, tree, y_prob=None, idx_bool=None):
-        #        y_prob = np.repeat(np.nan, len(X)) if (y_prob is None) else (y_prob)
-        #        idx_bool = np.repeat(True, len(X)) if (idx_bool is None) else (idx_bool)
-        #        if type(tree) == type({}):
-        #            feature, value = list(tree.keys())[0]
-        #            left_bool = (X[:, feature] < value) & idx_bool
-        #            right_bool = (X[:, feature] >= value) & idx_bool
-        #            sub_tree_left = tree[(feature, value)]["<"]
-        #            sub_tree_right = tree[(feature, value)][">="]
-        #            y_prob = get_prob(X, sub_tree_left, y_prob, left_bool)
-        #            y_prob = get_prob(X, sub_tree_right, y_prob, right_bool)
-        #            return y_prob
-
-        #        else:
-        #            y_prob[idx_bool] = tree[0]
-        #            return y_prob
-
-        #    def kamiran_discrimination(X="X", s="s"):
-        #        y_pred = (get_prob(X, self.tree) >= 0.5).astype(int)
-        #        y_pred_pos = y_pred == 1
-        #        kamiran_discrimination = \
-        #            (self.s_neg_bool & y_pred_pos).sum() / self.s_neg_bool.sum() - \
-        #            (self.s_pos_bool & y_pred_pos).sum() / self.s_pos_bool.sum()
-
-        #        return kamiran_discrimination
-
-        #    kamiran_discrimination = kamiran_discrimination(self.X, self.s)
-        #    if kamiran_discrimination != 0:
-        #        # grabbing leaves and paths to check which ones to swap
-        #        paths = []
-        #        leaves = []
-        #        for path, leaf in self.paths_leaves:
-        #            class_label, delta_acc, delta_disc, score = leaf
-        #            # discriminations must have different signs
-        #            # since we want to reduce the abs(bias)
-        #            if (delta_disc * kamiran_discrimination) < 0:
-        #                paths.append(path)
-        #                leaves.append(leaf)
-
-        #        # checking which leaves are best to swap and saving their paths
-        #        paths_to_swap = []
-        #        leaves = np.array(leaves)
-        #        ranked_leaf_indxs = np.argsort(leaves[:, -1])[::-1]
-        #        rem_disc = kamiran_discrimination
-        #        counter = 0
-        #        if theta is None:
-        #            e_bound = (1 - self.orthogonality) * kamiran_discrimination
-        #        else:
-        #            e_bound = (1 - theta) * kamiran_discrimination
-        #        for i in range(len(ranked_leaf_indxs)):
-        #            ranked_idx = ranked_leaf_indxs[i]
-        #            delta_disc = leaves[ranked_idx, 2]
-        #            if abs(rem_disc) > abs(e_bound):
-        #                if abs(rem_disc + delta_disc) > abs(rem_disc):
-        #                    pass
-        #                else:
-        #                    counter += 1
-        #                    rem_disc += delta_disc
-        #                    path_to_swap = paths[ranked_idx]
-        #                    paths_to_swap.append(path_to_swap)
-
-        #        swap_tree = copy(self.tree)
-        #        for path in paths_to_swap:
-        #            path_str = ""
-        #            for sub_path in path:
-        #                feature, value, sign = sub_path
-        #                path_str += "[(" + str(feature) + ", " + str(value) + ")]['" + sign + "']"
-
-        #            class_label, delta_acc, delta_disc, score = eval("swap_tree" + path_str)
-        #            swap_leaf = (1 - class_label, None, None, None)  # no need for the scores anymore
-        #            command = "swap_tree" + path_str + " = " + str(swap_leaf)
-        #            exec(command)
-
-        #        y_prob = get_prob(X, swap_tree).reshape(-1, 1)
-
-        #    else:
-        #        y_prob = get_prob(X, self.tree).reshape(-1, 1)
 
         return np.concatenate(
             ((1 - y_prob), y_prob),
