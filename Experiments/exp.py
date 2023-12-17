@@ -145,22 +145,20 @@ def four_trees_table():
         print((result[:,0] + result[:,1]).mean(), (result[:,0] + result[:,1]).std())
         print(result[:,0].mean(), result[:,1].mean())
 
-        with open(name, "wb") as fp:
-            pickle.dump(result, fp)
+    #    with open(name, "wb") as fp:
+    #        pickle.dump(result, fp)
 
-    for file in os.listdir("Data/Results"):
-        if "table" in file:
-            print(file)
-            with open("Data/Results/" + file, "rb") as fp:
-                data = pickle.load(fp)
-            data = np.array(data)
-            #print("fit:", data[:,0].mean(), ",", data[:,0].std())
-            #print("predict:", data[:,1].mean(), ",", data[:,1].std())
-            print("total:", (data[:,0] + data[:,1]).mean(), ",", (data[:,0] + data[:,1]).std())
+    #for file in os.listdir("Data/Results"):
+    #    if "table" in file:
+    #        print(file)
+    #        with open("Data/Results/" + file, "rb") as fp:
+    #            data = pickle.load(fp)
+    #        data = np.array(data)
+    #        print("total:", (data[:,0] + data[:,1]).mean(), ",", (data[:,0] + data[:,1]).std())
 
 
 
-def S_shift_table():
+def S_shift():
     result = []
     for lang in ["Python", "C++"]:
         result.append([])
@@ -195,8 +193,8 @@ def S_shift_table():
 
 
 def AUC_table():
-    n_range = [10000]
-    m_range = [100]
+    n_range = [1000, 10000]
+    m_range = [10, 100]
 
     result = []
     
@@ -292,7 +290,7 @@ def Plot_n_bins():
 
 
       
-def Plot_heatmaps
+def Plot_heatmaps():
     n_range = list(range(1000, 10001, 1000))
     m_range = list(range(10, 101, 10))
     with open(CPP[1], 'rb') as fp:
@@ -356,8 +354,8 @@ def Plot_s_shift():
 
 def Forest_data():
     langs = ["python", "cpp", "hybrid"]
-    n_range = [10000]
-    jobs_range = [1]
+    n_range = [1000, 10000]
+    jobs_range = [1, -1]
     est_range = [1, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
     m = 10
     s_shift = 0.1
@@ -449,7 +447,7 @@ def Plot_forest_comparison():
     plt.show()
 
 
-def Forest_prediction_table:
+def Forest_prediction_table():
     est_range = list(range(50, 501, 50))
     langs = ["python", "cpp", "hybrid"]
     n_jobs = [1, -1]
@@ -579,29 +577,29 @@ def RWD_table_forests():
                 result = pickle.load(fp)
             print(np.array(result)[:,0].mean(), np.array(result)[:,1].mean())
 
-def Plot_overfit():
-    name = "Data/Results/vary_samples_c_big_one_d1694455266.pkl"
-    with open(name, "rb") as fp:
-        data1 = pickle.load(fp)
+#def Plot_overfit():
+#    name = "Data/Results/vary_samples_c_big_one_d1694455266.pkl"
+#    with open(name, "rb") as fp:
+#        data1 = pickle.load(fp)
 
-    name = "Data/Results/vary_samples_c_big_one_d1694455037.pkl"
-    with open(name, "rb") as fp:
-        data2 = pickle.load(fp)
+#    name = "Data/Results/vary_samples_c_big_one_d1694455037.pkl"
+#    with open(name, "rb") as fp:
+#        data2 = pickle.load(fp)
 
 
-    figure = plt.figure(figsize=(16, 6))
-    gs = figure.add_gridspec(1, 2, hspace=0.3)
-    axis = [
-        figure.add_subplot(gs[0, 0]),
-        figure.add_subplot(gs[0, 1])
-        ]
-    axis[0].plot(data1["samples"], data1[0])
-    axis[1].plot(data2["samples"], data2[0])
-    axis[0].set_ylabel("Runtime in seconds", font={"size": 15})
-    axis[0].set_xlabel("Number of samples", font={"size": 15})
-    axis[0].xaxis.set_label_coords(1.1, -0.07)
-    axis[0].set_title("Default hyperparameters", font={"size": 15})
-    axis[1].set_ylabel("Runtime in seconds", font={"size": 15})
-    axis[1].set_title("Adjusted hyperparameters", font={"size": 15})
-    plt.tight_layout()
-    plt.show()
+#    figure = plt.figure(figsize=(16, 6))
+#    gs = figure.add_gridspec(1, 2, hspace=0.3)
+#    axis = [
+#        figure.add_subplot(gs[0, 0]),
+#        figure.add_subplot(gs[0, 1])
+#        ]
+#    axis[0].plot(data1["samples"], data1[0])
+#    axis[1].plot(data2["samples"], data2[0])
+#    axis[0].set_ylabel("Runtime in seconds", font={"size": 15})
+#    axis[0].set_xlabel("Number of samples", font={"size": 15})
+#    axis[0].xaxis.set_label_coords(1.1, -0.07)
+#    axis[0].set_title("Default hyperparameters", font={"size": 15})
+#    axis[1].set_ylabel("Runtime in seconds", font={"size": 15})
+#    axis[1].set_title("Adjusted hyperparameters", font={"size": 15})
+#    plt.tight_layout()
+#    plt.show()
