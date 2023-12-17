@@ -26,7 +26,8 @@ def Main():
     exp.Plot_n_bins()
 
     exp.Forest_data()
-    exp.Plot_forest_comparison()
+    # Plot forest takes the parameter n
+    exp.Plot_forest_comparison(1000)
 
 
 

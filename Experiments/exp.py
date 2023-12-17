@@ -20,7 +20,6 @@ import joblib
 
 
     
-cdict = {"cpp" : "tab:blue", "python" : "tab:orange", "hybrid" : "tab:green"}
 
 def QA_preddiff_trees():
     langs = ["cpp", "calc", "ohe"]
@@ -115,7 +114,7 @@ def QA_preddiff_forests():
 def four_trees_table():
     langs = ["python", "cpp", "calc", "ohe"]
     for lang in langs:
-        name = f"Data/Results/table_n1_m1_s01_{str(time.time())[:10]}_{lang}.pkl"
+        name = f"Results/table_n1_m1_s01_{str(time.time())[:10]}_{lang}.pkl"
         result = []
         X, y, s = datasets.complex_variable(5000, 50, 0.1)
         for i in range(5):
@@ -144,17 +143,6 @@ def four_trees_table():
         print(lang)
         print((result[:,0] + result[:,1]).mean(), (result[:,0] + result[:,1]).std())
         print(result[:,0].mean(), result[:,1].mean())
-
-    #    with open(name, "wb") as fp:
-    #        pickle.dump(result, fp)
-
-    #for file in os.listdir("Data/Results"):
-    #    if "table" in file:
-    #        print(file)
-    #        with open("Data/Results/" + file, "rb") as fp:
-    #            data = pickle.load(fp)
-    #        data = np.array(data)
-    #        print("total:", (data[:,0] + data[:,1]).mean(), ",", (data[:,0] + data[:,1]).std())
 
 
 
@@ -186,7 +174,7 @@ def S_shift():
                 set_times.append(fold_times)
             result[-1].append(set_times)
 
-    name = "Data/Results/heatmap_s_shift_" + str(time.time())[:10] +"_python.pkl"
+    name = "Results/s_shift_" + str(time.time())[:10] +".pkl"
 
     with open(name, "wb") as fp:
         pickle.dump(result, fp)
@@ -227,35 +215,39 @@ def Heatmap_data():
     s_shifts = np.array(list(range(2, 6, 1))) / 10
 
     for s_shift in s_shifts:
-        print("C++", s_shift)
-        data = heatmap.heatmap_data(s_shift, "C++")
-        name = "Data/Results/heatmap_nbins" + str(s_shift)[-1] + "_" + str(time.time())[:10] +"_cpp.pkl"
-        print(name)
-        with open(name, 'wb') as fp:
-            pickle.dump(data, fp)
+        for lang in ["Python", "C++"]: 
+            print(lang, s_shift)
+            data = heatmap.heatmap_data(s_shift, lang)
+            #Bit of a silly solution but oh well
+            langdict = {"Python": "python", "C++": "cpp"}
+            name = "Results/heatmap" + str(s_shift)[-1] + "_" + langdict[lang] + "_" + str(time.time())[:10] + ".pkl"
+            print(name)
+            with open(name, 'wb') as fp:
+                pickle.dump(data, fp)
 
 
 def n_bins_data():
-    lang = "C++"
+    langs = ["python", "cpp"]
     result = []
-    for n in np.array(range(500, 5001, 500)):
-        for m in [50]:
-            print(n, m)
-            X, y, s = datasets.complex_variable(5000, m, 0.1)
-            set_times = []
-            for i in range(5):
-                if lang == "Python":
-                    tree = FDTC.FairDecisionTreeClassifier(n_bins=n)
-                else:
-                    tree = FDTCPP.FDTC(n_bins=n)
-                t0 = perf_counter()
-                tree.fit(X[i], y[i], s[i])
-                t1 = perf_counter()
-                set_times.append(t0 - t1)
-            result.append(set_times)
-    name = "Data/Results/heatmap_nbins5_" + str(time.time())[:10] +"_cpp.pkl"
-    with open(name, "wb") as fp:
-        pickle.dump(result, fp)
+    for lang in langs:
+        for n in np.array(range(500, 5001, 500)):
+            for m in [50]:
+                print(n, m)
+                X, y, s = datasets.complex_variable(5000, m, 0.1)
+                set_times = []
+                for i in range(5):
+                    if lang == "python":
+                        tree = FDTC.FairDecisionTreeClassifier(n_bins=n)
+                    else:
+                        tree = FDTCPP.FDTC(n_bins=n)
+                    t0 = perf_counter()
+                    tree.fit(X[i], y[i], s[i])
+                    t1 = perf_counter()
+                    set_times.append(t0 - t1)
+                result.append(set_times)
+        name = "Results/nbins_" + lang + "_" + str(time.time())[:10] + ".pkl"
+        with open(name, "wb") as fp:
+            pickle.dump(result, fp)
 
 
 def Plot_n_bins():
@@ -263,13 +255,19 @@ def Plot_n_bins():
     gs = figure.add_gridspec(1, 2, hspace=0.3)
     axis = [figure.add_subplot(gs[0,0]), figure.add_subplot(gs[0, 1])]
     n_range = range(500, 5001, 500)
-    name = "Data/Results/heatmap_nbins5_1696168036_python.pkl"
+    # If you wish to look at a particular run, enter the filename as name
+    # Otherwise, the last run will be plot
+    name = False
+    if not name:
+        for file in os.listdir("Results"):
+            if "nbins" in file:
+                name = file
     with open(name, "rb") as fp:
         data1 = pickle.load(fp)
     data1 = np.array([conf.mean() for conf in np.array(data1) * -1]) #t0 - t1 should've been t1 - t0, woops
     axis[0].plot(n_range, data1, color="tab:orange")
 
-    name = "Data/Results/heatmap_nbins5_1696174771_cpp.pkl"
+    name = "Results/heatmap_nbins5_1696174771_cpp.pkl"
     with open(name, "rb") as fp:
         data2 = pickle.load(fp)  
     data2 = np.array([conf.mean() for conf in np.array(data2) * -1])
@@ -293,7 +291,14 @@ def Plot_n_bins():
 def Plot_heatmaps():
     n_range = list(range(1000, 10001, 1000))
     m_range = list(range(10, 101, 10))
-    with open(CPP[1], 'rb') as fp:
+    # If you wish to look at a particular run, enter the filename as name
+    # Otherwise, the last run will be plot
+    name = False
+    if not name:
+        for file in os.listdir("Results"):
+            if "heatmap" in file:
+                name = file
+    with open(name, 'rb') as fp:
         data1 = np.array(pickle.load(fp))
 
     with open(Python[1], "rb") as fp:
@@ -311,7 +316,13 @@ def Plot_heatmaps():
 
 def Plot_s_shift():
     xlabels = np.array(range(1, 6)) / 10
-    name = "Data/Results/compare_s_shift_1696084683_python.pkl"
+    # If you wish to look at a particular run, enter the filename as name
+    # Otherwise, the last run will be plot
+    name = False
+    if not name:
+        for file in os.listdir("Results"):
+            if "s_shift" in file:
+                name = file
 
     with open(name, "rb") as fp:
         data = pickle.load(fp)
@@ -366,7 +377,7 @@ def Forest_data():
                 if n_jobs != 1 or lang != "python":
                     continue
                 for n_estimators in est_range:
-                    name = f"Data/Results/forest_{n}_{n_jobs}_{n_estimators}_{str(time.time())[:10]}_{lang}.pkl"
+                    name = f"Results/forest_{n}_{n_jobs}_{n_estimators}_{lang}_{str(time.time())[:10]}.pkl"
                     result = []
                     X, y, s = datasets.complex_variable(n, m, s_shift)
                     for i in range(5):
@@ -395,13 +406,15 @@ def Forest_data():
                     with open(name, "wb") as fp:
                         pickle.dump(result, fp)
 
-def Plot_forest_comparison():
+def Plot_forest_comparison(n=1000):
     est_range = list(range(50, 501, 50))
     est_range.insert(0, 1)
     langs = ["python", "cpp", "hybrid"]
-    n = 10000
     n_jobs = [1, -1]
     s = 1
+
+    
+    cdict = {"cpp" : "tab:blue", "python" : "tab:orange", "hybrid" : "tab:green"}
 
     figure = plt.figure(figsize=(16,4))
     gs = figure.add_gridspec(1, 3, hspace=0.3)
@@ -417,9 +430,9 @@ def Plot_forest_comparison():
             result = []
             for est in est_range:
                 part = f"forest_{n}_{n_job}_{est}_{s}"
-                for file in os.listdir("Data/Results"):
+                for file in os.listdir("Results"):
                     if part in file and lang in file:
-                        with open(f"Data/Results/{file}", "rb") as fp:
+                        with open(f"Results/{file}", "rb") as fp:
                             data = pickle.load(fp)
                             result.append(data)
             fit = [run[0] for res in result for run in res]
@@ -458,9 +471,9 @@ def Forest_prediction_table():
                 result = []
                 for est in est_range:
                     part = f"forest_{n}_{n_job}_{est}_1"
-                    for file in os.listdir("Data/Results"):
+                    for file in os.listdir("Results"):
                         if part in file and lang in file:
-                            with open(f"Data/Results/{file}", "rb") as fp:
+                            with open(f"Results/{file}", "rb") as fp:
                                 data = pickle.load(fp)
                                 result.append(data)
                 predict = [run[1] for res in result for run in res]
@@ -519,10 +532,6 @@ def RWD_table_trees():
             print(lang, key)
             print(np.array(result)[:,0].mean(), np.array(result)[:,1].mean())
 
-            name = f"Data/Results/rwd_{key}_{lang}.pkl"
-            with open(name, 'wb') as fp:
-                pickle.dump(result, fp)
-
 def RWD_table_forests():
     keys = ["adult", "dutch_census", "german_credit", "bank_marketing", "law_school"]
     datadict = joblib.load('datasets.pkl')
@@ -566,23 +575,14 @@ def RWD_table_forests():
             print(lang, key)
             print(np.array(result)[:,0].mean(), np.array(result)[:,1].mean())
 
-            name = f"Data/Results/rwdforest_{key}_{lang}.pkl"
-            with open(name, 'wb') as fp:
-                pickle.dump(result, fp)
-
-    for name in os.listdir("Data/Results"):
-        if "rwdforest" in name:
-            print(name)
-            with open(f"Data/Results/{name}", "rb") as fp:
-                result = pickle.load(fp)
-            print(np.array(result)[:,0].mean(), np.array(result)[:,1].mean())
+            name = f"Results/rwdforest_{key}_{lang}.pkl"
 
 #def Plot_overfit():
-#    name = "Data/Results/vary_samples_c_big_one_d1694455266.pkl"
+#    name = "Results/vary_samples_c_big_one_d1694455266.pkl"
 #    with open(name, "rb") as fp:
 #        data1 = pickle.load(fp)
 
-#    name = "Data/Results/vary_samples_c_big_one_d1694455037.pkl"
+#    name = "Results/vary_samples_c_big_one_d1694455037.pkl"
 #    with open(name, "rb") as fp:
 #        data2 = pickle.load(fp)
 
