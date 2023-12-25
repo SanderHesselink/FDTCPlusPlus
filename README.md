@@ -19,9 +19,10 @@ import FDTCPP
 import joblib
 
 data = joblib.load(datasets.pkl)["adult"]
-X = data["X"]
-y = data["y"]
-s = data["s"]
+# The model only works on Python lists and NumPy arrays, so pandas DataFrames need to be converted first
+X = data["X"].to_numpy()
+y = data["y"].to_numpy()
+s = data["s"].to_numpy()
 
 clf = FDTCPP.FDTC()
 clf.fit(X, y, s)
